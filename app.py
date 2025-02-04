@@ -3,7 +3,7 @@ import requests
 import os
 
 app = Flask(__name__)
-M3U_URL = "https://iptv-org.github.io/iptv/index.m3u"
+M3U_URL = "https://m3u.prigoana.com/all.m3u"
 PLAYLIST_DIR = "playlists"
 M3U_FILENAME = "index.m3u"
 M3U_FILEPATH = os.path.join(PLAYLIST_DIR, M3U_FILENAME)
