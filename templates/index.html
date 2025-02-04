@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Playlist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background-color: #121212;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 16px;
+            background-color: #333;
+            color: #ffffff;
+            border: 1px solid #555;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .channel-list {
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #555;
+            padding: 10px;
+            background-color: #222;
+            border-radius: 5px;
+        }
+        .channel-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #333;
+        }
+        .channel-item:hover {
+            background-color: #333;
+        }
+        .channel-content {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+        }
+        .channel-text {
+            flex: 1;
+        }
+        .channel-checkbox {
+            flex-basis: 50px;
+            text-align: right;
+        }
+        .channel-checkbox input {
+            transform: scale(1.2);
+        }
+    </style>
+    <script>
+        function filterChannels() {
+            let input = document.getElementById("search").value.toLowerCase();
+            let items = document.querySelectorAll(".channel-item");
+            items.forEach(item => {
+                let text = item.querySelector(".channel-text").textContent.toLowerCase();
+                item.style.display = text.includes(input) ? "flex" : "none";
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll(".channel-item").forEach(item => {
+                item.addEventListener("click", (event) => {
+                    if (event.target.tagName !== "INPUT") {
+                        let checkbox = item.querySelector("input");
+                        checkbox.checked = !checkbox.checked;
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Select Channels to Create a New Playlist</h1>
+        <form action="/generate" method="post">
+            <label for="filename">Playlist Name:</label>
+            <input type="text" name="filename" required>
+            <input type="text" id="search" onkeyup="filterChannels()" placeholder="Search channels...">
+            <div class="channel-list">
+                {% for name, info, url in channels %}
+                    <div class="channel-item">
+                        <div class="channel-content">
+                            <span class="channel-text">{{ name }}</span>
+                            <div class="channel-checkbox">
+                                <input type="checkbox" name="channels" value="{{ info }}|{{ url }}">
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit">Generate Playlist</button>
+        </form>
+    </div>
+</body>
+</html>
