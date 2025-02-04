@@ -5,6 +5,8 @@ import os
 app = Flask(__name__)
 M3U_URL = "https://iptv-org.github.io/iptv/index.m3u"
 PLAYLIST_DIR = "playlists"
+M3U_FILENAME = "index.m3u"
+M3U_FILEPATH = os.path.join(PLAYLIST_DIR, M3U_FILENAME)
 
 if not os.path.exists(PLAYLIST_DIR):
     os.makedirs(PLAYLIST_DIR)
@@ -12,11 +14,18 @@ if not os.path.exists(PLAYLIST_DIR):
 def fetch_m3u():
     response = requests.get(M3U_URL)
     if response.status_code == 200:
-        return response.text
-    return ""
+        with open(M3U_FILEPATH, "w") as f:
+            f.write(response.text)
+    else:
+        print("Failed to download M3U file")
 
-def parse_m3u(m3u_content):
-    lines = m3u_content.split("\n")
+fetch_m3u()
+
+def parse_m3u():
+    if not os.path.exists(M3U_FILEPATH):
+        return []
+    with open(M3U_FILEPATH, "r") as f:
+        lines = f.readlines()
     channels = []
     name, url = None, None
     for line in lines:
@@ -32,8 +41,7 @@ def parse_m3u(m3u_content):
 
 @app.route("/")
 def index():
-    m3u_content = fetch_m3u()
-    channels = parse_m3u(m3u_content)
+    channels = parse_m3u()
     return render_template("index.html", channels=channels)
 
 @app.route("/generate", methods=["POST"])
@@ -54,6 +62,9 @@ def generate_playlist():
 def serve_playlist(filename):
     return send_from_directory(PLAYLIST_DIR, filename)
 
+@app.route(f"/{M3U_FILENAME}")
+def serve_main_m3u():
+    return send_from_directory(PLAYLIST_DIR, M3U_FILENAME)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000, debug=True)
-
