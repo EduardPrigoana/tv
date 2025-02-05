@@ -10,13 +10,7 @@ CORS(app)  # Enable CORS for all routes
 URLS = [
     "https://iptv-org.github.io/iptv/index.country.m3u",
     "https://forge.fsky.io/frost/repo/raw/branch/main/tv.m3u",
-    "https://raw.githubusercontent.com/Free-TV/IPTV/refs/heads/master/playlist.m3u8",
-    "https://free-git.org/cute/iptv/raw/branch/master/streams/us_redtraffic.m3u",
-    "https://free-git.org/cute/iptv/raw/branch/master/streams/us_adultiptv.m3u",
-    "https://free-git.org/cute/iptv/raw/commit/69e7168eb61dff2ee7cfc442da30e9bab9a00206/streams/cy_mycamtv.m3u",
-    "https://raw.githubusercontent.com/reklamalinir/freeadultiptv/refs/heads/master/live_adult_channels.m3u",
-    "http://adultiptv.net/chs.m3u",
-    "https://raw.githubusercontent.com/reklamalinir/freeadultiptv/refs/heads/master/live_adult_channels.m3u"
+    "https://raw.githubusercontent.com/Free-TV/IPTV/refs/heads/master/playlist.m3u8"
 ]
 
 # Cached M3U content and a lock for thread safety
