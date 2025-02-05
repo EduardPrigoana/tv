@@ -40,7 +40,7 @@ def combine_m3u(urls):
     # Return the combined M3U content
     return '#EXTM3U\n' + '\n'.join(unique_streams.values())
 
-@app.route('/all.m3u')
+@app.route('/all.m3u8')
 def serve_m3u():
     """Serve the combined M3U file."""
     global combined_m3u
