@@ -9,7 +9,7 @@ CORS(app)  # Enable CORS for all routes
 # List of M3U file URLs
 URLS = [
     "https://iptv-org.github.io/iptv/index.country.m3u",
-    "https://forge.fsky.io/frost/repo/raw/branch/main/tv.m3u",
+    "https://git.prigoana.com/frost/repo/src/branch/main/tv.m3u",
     "https://raw.githubusercontent.com/Free-TV/IPTV/refs/heads/master/playlist.m3u8",
     "https://git.nadeko.net/Mystique/MystiquePlus/raw/branch/main/mystique.m3u"
 ]
