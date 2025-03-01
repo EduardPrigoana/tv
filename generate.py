@@ -10,8 +10,26 @@ CORS(app)  # Enable CORS for all routes
 URLS = [
     "https://iptv-org.github.io/iptv/index.country.m3u",
     "https://git.prigoana.com/frost/repo/src/branch/main/tv.m3u",
-    "https://raw.githubusercontent.com/Free-TV/IPTV/refs/heads/master/playlist.m3u8",
-    "https://git.nadeko.net/Mystique/MystiquePlus/raw/branch/main/mystique.m3u"
+    "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8",
+    "https://git.nadeko.net/Mystique/MystiquePlus/raw/branch/main/mystique.m3u",
+    "https://m3u.ibert.me/fmml_itv.m3u",
+    "https://m3u.ibert.me/fmml_index.m3u",
+    "https://m3u.ibert.me/ycl_iptv.m3u",
+    "https://m3u.ibert.me/cymz6_lives.m3u",
+    "https://m3u.ibert.me/y_g.m3u",
+    "https://m3u.ibert.me/j_home.m3u",
+    "https://m3u.ibert.me/j_iptv.m3u",
+    "https://m3u.ibert.me/o_cn.m3u",
+    "https://m3u.ibert.me/o_s_cn_112114.m3u",
+    "https://m3u.ibert.me/o_s_cn_cctv.m3u",
+    "https://m3u.ibert.me/o_s_cn_cgtn.m3u",
+    "https://m3u.ibert.me/cn.m3u",
+    "https://m3u.ibert.me/cn_c.m3u",
+    "https://m3u.ibert.me/cn_p.m3u",
+    "https://m3u.ibert.me/q_bj_iptv_unicom.m3u",
+    "https://m3u.ibert.me/q_bj_iptv_unicom_m.m3u",
+    "https://m3u.ibert.me/q_bj_iptv_mobile.m3u",
+    "https://m3u.ibert.me/q_bj_iptv_mobile_m.m3u"
 ]
 
 # Cached M3U content and a lock for thread safety
