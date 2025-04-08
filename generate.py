@@ -1,5 +1,5 @@
 import requests
-from flask import Flask, Response
+from flask import Flask, Response, render_template_string
 from flask_cors import CORS
 import threading
 
@@ -66,6 +66,33 @@ def combine_m3u(urls):
                 current_entry = None  # Reset after adding
             
     return '#EXTM3U\n' + '\n'.join(unique_streams.values())
+
+@app.route('/')
+@app.route('/index')
+@app.route('/index.html')
+def index():
+    """Render a simple HTML interface with two links."""
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>IPTV M3U</title>
+        <style>
+            body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+            a { display: block; margin: 10px 0; font-size: 20px; text-decoration: none; color: #007bff; }
+            a:hover { text-decoration: underline; }
+        </style>
+    </head>
+    <body>
+        <h1>IPTV M3U Playlist</h1>
+        <a href="/generate">Generate Playlist</a>
+        <a href="/all.m3u">Download Playlist</a>
+    </body>
+    </html>
+    """
+    return render_template_string(html_content)
 
 @app.route('/all.m3u')
 def serve_m3u():
