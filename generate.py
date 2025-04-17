@@ -30,7 +30,9 @@ URLS = [
     "https://m3u.ibert.me/q_bj_iptv_unicom_m.m3u",
     "https://m3u.ibert.me/q_bj_iptv_mobile.m3u",
     "https://m3u.ibert.me/q_bj_iptv_mobile_m.m3u",
-    "https://tvpass.org/playlist/m3u"
+    "https://tvpass.org/playlist/m3u",
+    "https://i.mjh.nz/all/raw.m3u8"
+    "https://forge.fsky.io/frost/repo/raw/branch/main/radio.m3u"
 ]
 
 # Cached M3U content and a lock for thread safety
