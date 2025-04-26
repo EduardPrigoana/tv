@@ -1,0 +1,5 @@
+Flask
+Flask-Cors
+requests
+gunicorn
+aiohttp
