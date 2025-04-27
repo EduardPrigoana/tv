@@ -117,20 +117,23 @@ def catch_all(unused_path):
 
 def regenerate_m3u():
     global combined_m3u, last_updated
-    last_urls = []
+    previous_channel_count = None
+
     while True:
-        # Create a new event loop for this background thread
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
         with lock:
             urls = load_urls()
-            if urls != last_urls:
-                combined_m3u = combine_m3u_async(urls)
+            new_combined_m3u = combine_m3u_async(urls)
+            new_channel_count = count_channels(new_combined_m3u)
+
+            if previous_channel_count is None or new_channel_count != previous_channel_count:
+                combined_m3u = new_combined_m3u
                 last_updated = datetime.utcnow().replace(tzinfo=timezone.utc)
-                last_urls = urls
-                logging.info(f"M3U regenerated at {last_updated}")
+                previous_channel_count = new_channel_count
+                logging.info(f"M3U regenerated at {last_updated} with {new_channel_count} channels")
+            else:
+                logging.info(f"No change detected ({new_channel_count} channels), not updating last_updated")
 
-        threading.Event().wait(600)  # Wait 10 minutes
-
-threading.Thread(target=regenerate_m3u, daemon=True).start()
+        threading.Event().wait(10)  # Wait 10 minutes
