@@ -3,10 +3,8 @@ import requests
 from flask import Flask, Response, render_template
 from flask_cors import CORS
 import threading
-import asyncio
 import logging
 from datetime import datetime, timezone
-import aiohttp
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -35,26 +33,24 @@ def load_urls():
         logging.error(f"Error fetching {SOURCES_URL}: {e}")
         return []
 
-async def fetch_m3u_async(session, url):
+def fetch_m3u_sync(url):
     try:
-        async with session.get(url, timeout=5) as response:
-            response.raise_for_status()
-            return await response.text()
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        return response.text
     except Exception as e:
         logging.error(f"Error fetching {url}: {e}")
         return ""
 
-async def fetch_all_m3u(urls):
-    async with aiohttp.ClientSession() as session:
-        tasks = [fetch_m3u_async(session, url) for url in urls]
-        return await asyncio.gather(*tasks)
+def fetch_all_m3u(urls):
+    m3u_contents = []
+    for url in urls:
+        m3u_contents.append(fetch_m3u_sync(url))
+    return m3u_contents
 
-def combine_m3u_async(urls):
+def combine_m3u_sync(urls):
     unique_streams = []
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    m3u_contents = loop.run_until_complete(fetch_all_m3u(urls))
-
+    m3u_contents = fetch_all_m3u(urls)
     for m3u_content in m3u_contents:
         lines = m3u_content.splitlines()
         current_entry = None
@@ -65,7 +61,6 @@ def combine_m3u_async(urls):
                 stream_link = line.strip()
                 unique_streams.append(f"{current_entry}\n{stream_link}")
                 current_entry = None
-
     return '#EXTM3U\n' + '\n'.join(unique_streams)
 
 def count_channels(m3u_data):
@@ -92,13 +87,11 @@ def index():
     with lock:
         if combined_m3u is None:
             urls = load_urls()
-            combined_m3u = combine_m3u_async(urls)
+            combined_m3u = combine_m3u_sync(urls)
             last_updated = datetime.utcnow().replace(tzinfo=timezone.utc)
         channel_count = count_channels(combined_m3u)
-
     ago_str = time_ago(last_updated)
     last_updated_str = last_updated.strftime('%Y-%m-%d %H:%M:%S GMT') if last_updated else "Unknown"
-
     return render_template("index.html", channel_count=channel_count, last_updated_str=last_updated_str, ago_str=ago_str)
 
 @app.route('/all.m3u')
@@ -107,7 +100,7 @@ def serve_m3u():
     with lock:
         if combined_m3u is None:
             urls = load_urls()
-            combined_m3u = combine_m3u_async(urls)
+            combined_m3u = combine_m3u_sync(urls)
             last_updated = datetime.utcnow().replace(tzinfo=timezone.utc)
     return Response(combined_m3u, mimetype='application/vnd.apple.mpegurl')
 
@@ -117,23 +110,15 @@ def catch_all(unused_path):
 
 def regenerate_m3u():
     global combined_m3u, last_updated
-    previous_channel_count = None
-
+    last_urls = []
     while True:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
         with lock:
             urls = load_urls()
-            new_combined_m3u = combine_m3u_async(urls)
-            new_channel_count = count_channels(new_combined_m3u)
-
-            if previous_channel_count is None or new_channel_count != previous_channel_count:
-                combined_m3u = new_combined_m3u
+            if urls != last_urls:
+                combined_m3u = combine_m3u_sync(urls)
                 last_updated = datetime.utcnow().replace(tzinfo=timezone.utc)
-                previous_channel_count = new_channel_count
-                logging.info(f"M3U regenerated at {last_updated} with {new_channel_count} channels")
-            else:
-                logging.info(f"No change detected ({new_channel_count} channels), not updating last_updated")
-
+                last_urls = urls
+                logging.info(f"M3U regenerated at {last_updated}")
         threading.Event().wait(10)  # Wait 10 minutes
+
+threading.Thread(target=regenerate_m3u, daemon=True).start()
