@@ -5,9 +5,9 @@ from flask_cors import CORS
 import threading
 import logging
 from datetime import datetime, timezone
-
+import time
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 CORS(app)
@@ -110,15 +110,18 @@ def catch_all(unused_path):
 
 def regenerate_m3u():
     global combined_m3u, last_updated
-    last_urls = []
     while True:
         with lock:
+            # Fetch the sources file (URLs list) from SOURCES_URL every time
             urls = load_urls()
-            if urls != last_urls:
+            if urls:
+                # If we successfully loaded URLs, fetch the M3Us
                 combined_m3u = combine_m3u_sync(urls)
                 last_updated = datetime.utcnow().replace(tzinfo=timezone.utc)
-                last_urls = urls
                 logging.info(f"M3U regenerated at {last_updated}")
-        threading.Event().wait(10)  # Wait 10 minutes
+            else:
+                logging.warning("No URLs to process.")
+        time.sleep(60)  # Wait 10 minutes before re-running the process
+
 
 threading.Thread(target=regenerate_m3u, daemon=True).start()
