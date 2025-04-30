@@ -121,7 +121,7 @@ def regenerate_m3u():
                 logging.info(f"M3U regenerated at {last_updated}")
             else:
                 logging.warning("No URLs to process.")
-        time.sleep(60)  # Wait 10 minutes before re-running the process
+        time.sleep(600)  # Wait 10 minutes before re-running the process
 
 
 threading.Thread(target=regenerate_m3u, daemon=True).start()
