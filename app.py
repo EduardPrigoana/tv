@@ -2,19 +2,26 @@ import os
 import requests
 from flask import Flask, Response, render_template
 from flask_cors import CORS
-import threading
+from flask_apscheduler import APScheduler
 import logging
 from datetime import datetime, timezone
-import time
+
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
 
+class Config:
+    SCHEDULER_API_ENABLED = True
+
 app = Flask(__name__)
+app.config.from_object(Config())
 CORS(app)
+
+scheduler = APScheduler()
+scheduler.init_app(app)
+scheduler.start()
 
 combined_m3u = None
 last_updated = None
-lock = threading.Lock()
 
 # Get the sources URL from environment variable
 SOURCES_URL = os.getenv('SOURCES')
@@ -43,15 +50,12 @@ def fetch_m3u_sync(url):
         return ""
 
 def fetch_all_m3u(urls):
-    m3u_contents = []
-    for url in urls:
-        m3u_contents.append(fetch_m3u_sync(url))
-    return m3u_contents
+    return [fetch_m3u_sync(url) for url in urls]
 
 def combine_m3u_sync(urls):
     unique_streams = []
-    m3u_contents = fetch_all_m3u(urls)
-    for m3u_content in m3u_contents:
+    seen_streams = set()  # Track URLs we've already added
+    for m3u_content in fetch_all_m3u(urls):
         lines = m3u_content.splitlines()
         current_entry = None
         for line in lines:
@@ -59,7 +63,9 @@ def combine_m3u_sync(urls):
                 current_entry = line
             elif line and current_entry:
                 stream_link = line.strip()
-                unique_streams.append(f"{current_entry}\n{stream_link}")
+                if stream_link not in seen_streams:
+                    unique_streams.append(f"{current_entry}\n{stream_link}")
+                    seen_streams.add(stream_link)  # Mark as seen
                 current_entry = None
     return '#EXTM3U\n' + '\n'.join(unique_streams)
 
@@ -84,12 +90,9 @@ def time_ago(last_updated):
 @app.route('/index.html')
 def index():
     global combined_m3u, last_updated
-    with lock:
-        if combined_m3u is None:
-            urls = load_urls()
-            combined_m3u = combine_m3u_sync(urls)
-            last_updated = datetime.utcnow().replace(tzinfo=timezone.utc)
-        channel_count = count_channels(combined_m3u)
+    if combined_m3u is None:
+        do_regenerate_m3u()
+    channel_count = count_channels(combined_m3u)
     ago_str = time_ago(last_updated)
     last_updated_str = last_updated.strftime('%Y-%m-%d %H:%M:%S GMT') if last_updated else "Unknown"
     return render_template("index.html", channel_count=channel_count, last_updated_str=last_updated_str, ago_str=ago_str)
@@ -97,31 +100,30 @@ def index():
 @app.route('/all.m3u')
 def serve_m3u():
     global combined_m3u, last_updated
-    with lock:
-        if combined_m3u is None:
-            urls = load_urls()
-            combined_m3u = combine_m3u_sync(urls)
-            last_updated = datetime.utcnow().replace(tzinfo=timezone.utc)
+    if combined_m3u is None:
+        do_regenerate_m3u()
     return Response(combined_m3u, mimetype='application/vnd.apple.mpegurl')
 
 @app.route('/<path:unused_path>')
 def catch_all(unused_path):
     return index()
 
-def regenerate_m3u():
+# Core regeneration logic
+def do_regenerate_m3u():
     global combined_m3u, last_updated
-    while True:
-        with lock:
-            # Fetch the sources file (URLs list) from SOURCES_URL every time
-            urls = load_urls()
-            if urls:
-                # If we successfully loaded URLs, fetch the M3Us
-                combined_m3u = combine_m3u_sync(urls)
-                last_updated = datetime.utcnow().replace(tzinfo=timezone.utc)
-                logging.info(f"M3U regenerated at {last_updated}")
-            else:
-                logging.warning("No URLs to process.")
-        time.sleep(600)  # Wait 10 minutes before re-running the process
+    urls = load_urls()
+    if urls:
+        combined_m3u = combine_m3u_sync(urls)
+        last_updated = datetime.utcnow().replace(tzinfo=timezone.utc)
+        logging.info(f"M3U generated at {last_updated.isoformat()}")
+    else:
+        logging.warning("No URLs to process.")
 
+# Scheduled Job using APScheduler
+@scheduler.task('interval', id='regenerate_m3u_job', minutes=10, misfire_grace_time=300)
+def regenerate_m3u():
+    do_regenerate_m3u()
 
-threading.Thread(target=regenerate_m3u, daemon=True).start()
+if __name__ == "__main__":
+    do_regenerate_m3u()  # Generate immediately on startup
+    app.run(host='0.0.0.0', port=5000)
