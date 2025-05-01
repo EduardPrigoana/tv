@@ -1,5 +1,4 @@
 Flask
 Flask-Cors
+Flask-APScheduler
 requests
-gunicorn
-aiohttp
