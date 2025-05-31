@@ -120,7 +120,7 @@ def do_regenerate_m3u():
         logging.warning("No URLs to process.")
 
 # Scheduled Job using APScheduler
-@scheduler.task('interval', id='regenerate_m3u_job', minutes=10, misfire_grace_time=300)
+@scheduler.task('interval', id='regenerate_m3u_job', minutes=1200, misfire_grace_time=300)
 def regenerate_m3u():
     do_regenerate_m3u()
 
